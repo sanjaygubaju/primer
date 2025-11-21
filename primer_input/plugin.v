@@ -1,7 +1,7 @@
 module primer_input
 
-import primer_ecs { App, BasePlugin, IPluginLifecycle }
 import gg
+import primer_ecs { App }
 
 // ===============================
 //    Input Update System
@@ -78,18 +78,11 @@ pub fn (_ &InputUpdateSystem) update(mut app App, _ f64) ! {
 // ================================
 
 // InputPlugin sets up InputManager and InputUpdateSystem in the app.
-// Implements IPluginLifecycle for setup/teardown hooks.
-pub struct InputPlugin implements IPluginLifecycle {
-	BasePlugin
-}
+pub struct InputPlugin {}
 
 // new_input_plugin creates a new InputPlugin instance.
 pub fn new_input_plugin() InputPlugin {
-	return InputPlugin{
-		BasePlugin: BasePlugin{
-			name: 'InputPlugin'
-		}
-	}
+	return InputPlugin{}
 }
 
 // name returns plugin name
@@ -105,16 +98,7 @@ pub fn (_ &InputPlugin) build(mut app App) ! {
 		mouse_buttons: map[int]ButtonState{}
 		actions:       map[string]InputAction{}
 	})
+
 	// Register InputUpdateSystem to run in .pre_update stage.
 	app.system_manager.add(InputUpdateSystem{}, .pre_update)!
-}
-
-// Lifecycle: optional feedback on enable/disable.
-
-pub fn (ip &InputPlugin) on_enable(mut _ App) ! {
-	println('${ip.name()} plugin enabled')
-}
-
-pub fn (ip &InputPlugin) on_disable(mut _ App) ! {
-	println('${ip.name()} plugin disabled')
 }
