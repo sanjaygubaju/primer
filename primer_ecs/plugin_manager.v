@@ -20,14 +20,6 @@ pub interface IPluginLifecycle {
 	on_disable(mut app App) ! // Called on plugin unload/disable
 }
 
-// Common base plugin: convenient constructor for plugin_name/enable flag.
-pub struct BasePlugin {
-pub:
-	name string // Unique name
-pub mut:
-	enabled bool = true // Enable flag
-}
-
 // PluginManager: owns all plugins, tracks order/dependencies/state.
 pub struct PluginManager {
 mut:
