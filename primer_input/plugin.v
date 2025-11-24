@@ -71,6 +71,10 @@ pub fn (_ &InputUpdateSystem) update(mut app App, _ f64) ! {
 		x: f64(ctx.mouse_dx)
 		y: f64(ctx.mouse_dy)
 	}
+
+	// --- Mouse scroll wheel ---
+	input.mouse_scroll_x = f64(ctx.scroll_x)
+	input.mouse_scroll_y = f64(ctx.scroll_y)
 }
 
 // ================================
@@ -94,9 +98,11 @@ pub fn (_ &InputPlugin) name() string {
 pub fn (_ &InputPlugin) build(mut app App) ! {
 	// Register InputManager resource with empty maps.
 	app.resource_manager.insert(InputManager{
-		keys:          map[int]ButtonState{}
-		mouse_buttons: map[int]ButtonState{}
-		actions:       map[string]InputAction{}
+		keys:           map[int]ButtonState{}
+		mouse_buttons:  map[int]ButtonState{}
+		actions:        map[string]InputAction{}
+		mouse_scroll_x: 0.0
+		mouse_scroll_y: 0.0
 	})
 
 	// Register InputUpdateSystem to run in .pre_update stage.
