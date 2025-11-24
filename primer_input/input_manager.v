@@ -34,11 +34,13 @@ pub:
 // Register as a resource and update each frame for consistent behavior.
 pub struct InputManager {
 pub mut:
-	keys          map[int]ButtonState    // KeyCode => ButtonState
-	mouse_buttons map[int]ButtonState    // MouseCode => ButtonState
-	mouse_pos     Vec2                   // Current position
-	mouse_delta   Vec2                   // Movement since last frame
-	actions       map[string]InputAction // Named actions for high-level input
+	keys           map[int]ButtonState    // KeyCode => ButtonState
+	mouse_buttons  map[int]ButtonState    // MouseCode => ButtonState
+	mouse_pos      Vec2                   // Current position
+	mouse_delta    Vec2                   // Movement since last frame
+	mouse_scroll_x f64                    // Horizontal scroll delta
+	mouse_scroll_y f64                    // Vertical scroll delta (positive = up, negative = down)
+	actions        map[string]InputAction // Named actions for high-level input
 }
 
 // register_action registers a new named action mapping for easy queries.
@@ -125,6 +127,9 @@ pub fn (mut im InputManager) frame_update() {
 		x: 0
 		y: 0
 	}
+	// Reset scroll deltas each frame
+	im.mouse_scroll_x = 0.0
+	im.mouse_scroll_y = 0.0
 }
 
 // set_key_state sets pressed flag for a key.
@@ -163,6 +168,12 @@ pub fn (mut im InputManager) set_mouse_pos(x f64, y f64) {
 	}
 }
 
+// set_scroll sets the scroll wheel delta for this frame.
+pub fn (mut im InputManager) set_scroll(x f64, y f64) {
+	im.mouse_scroll_x = x
+	im.mouse_scroll_y = y
+}
+
 // clear resets all states (for resets or clean shutdown).
 pub fn (mut im InputManager) clear() {
 	im.keys.clear()
@@ -170,4 +181,6 @@ pub fn (mut im InputManager) clear() {
 	im.actions.clear()
 	im.mouse_pos = Vec2{}
 	im.mouse_delta = Vec2{}
+	im.mouse_scroll_x = 0.0
+	im.mouse_scroll_y = 0.0
 }
