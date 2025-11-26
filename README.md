@@ -2,6 +2,10 @@
 
 Simple ECS implementation in V.
 
+### Breakout Demo
+
+![Alt text](assets/breakout_demo.gif?raw=true "Breakout Demo")
+
 ***
 
 ## Usage
