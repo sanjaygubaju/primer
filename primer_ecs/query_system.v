@@ -129,28 +129,31 @@ pub struct QuerySystem {
 	component_types []ComponentTypeID
 	filters         []QueryFilter
 pub mut:
-	query_buffer      []QueryResult
-	cached_archetypes []ArchetypeID
-	cache_dirty       bool
+	query_buffer       []QueryResult
+	cached_archetypes  []ArchetypeID
+	cache_dirty        bool
+	archetype_versions map[ArchetypeID]u64
 }
 
 pub fn new_query_system(component_types []ComponentTypeID) QuerySystem {
 	return QuerySystem{
-		component_types:   component_types
-		filters:           []
-		query_buffer:      []QueryResult{cap: 256}
-		cached_archetypes: []
-		cache_dirty:       true
+		component_types:    component_types
+		filters:            []
+		query_buffer:       []QueryResult{cap: 256}
+		cached_archetypes:  []
+		cache_dirty:        true
+		archetype_versions: map[ArchetypeID]u64{}
 	}
 }
 
 pub fn new_query_system_filtered(component_types []ComponentTypeID, filters []QueryFilter) QuerySystem {
 	return QuerySystem{
-		component_types:   component_types
-		filters:           filters
-		query_buffer:      []QueryResult{cap: 256}
-		cached_archetypes: []
-		cache_dirty:       true
+		component_types:    component_types
+		filters:            filters
+		query_buffer:       []QueryResult{cap: 256}
+		cached_archetypes:  []
+		cache_dirty:        true
+		archetype_versions: map[ArchetypeID]u64{}
 	}
 }
 
@@ -160,6 +163,8 @@ pub fn (mut qs QuerySystem) invalidate_cache() {
 
 fn (mut qs QuerySystem) rebuild_cache(world &World) {
 	qs.cached_archetypes.clear()
+	qs.archetype_versions.clear()
+
 	for arch in world.archetypes.values() {
 		if !arch.matches(qs.component_types) {
 			continue
@@ -187,13 +192,39 @@ fn (mut qs QuerySystem) rebuild_cache(world &World) {
 		}
 		if matches {
 			qs.cached_archetypes << arch.id
+			qs.archetype_versions[arch.id] = arch.version
 		}
 	}
 	qs.cache_dirty = false
 }
 
-pub fn (mut qs QuerySystem) query(world &World) []QueryResult {
+pub fn (qs &QuerySystem) is_stale(world &World) bool {
+	// If someone explicitly invalidated the cache, always rebuild.
 	if qs.cache_dirty {
+		return true
+	}
+
+	// If the number of archetypes changed, something structural happened.
+	if world.archetypes.len != qs.archetype_versions.len {
+		return true
+	}
+
+	// Any difference in versions for any tracked archetype means stale.
+	for arch_id, arch in world.archetypes {
+		last_version := qs.archetype_versions[arch_id] or {
+			// New archetype or one we didn't know about yet.
+			return true
+		}
+		if arch.version != last_version {
+			return true
+		}
+	}
+
+	return false
+}
+
+pub fn (mut qs QuerySystem) query(world &World) []QueryResult {
+	if qs.is_stale(world) {
 		qs.rebuild_cache(world)
 	}
 	qs.query_buffer.clear()
@@ -226,7 +257,7 @@ pub fn (mut qs QuerySystem) query(world &World) []QueryResult {
 }
 
 pub fn (mut qs QuerySystem) count(world &World) int {
-	if qs.cache_dirty {
+	if qs.is_stale(world) {
 		qs.rebuild_cache(world)
 	}
 	mut total := 0

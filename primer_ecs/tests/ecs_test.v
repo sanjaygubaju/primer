@@ -110,6 +110,10 @@ fn test_query_system_and_caching() {
 	world.register_query_system(mut player_query)
 
 	assert world.get_query_system_size() == 3
+
+	assert movement_query.query(&world).len == 101
+	assert enemy_query.query(&world).len == 100
+	assert player_query.query(&world).len == 1
 }
 
 fn test_query_filtering() {
@@ -163,6 +167,17 @@ fn test_archetype_graph_transitions() {
 
 	world.add(test_entity, Position{ x: 1, y: 2 })
 	assert world.archetype_count() == 4
+
+	// New part: verify query cache sees transitions
+	pos_id := world.get_type_id[Position]()
+	vel_id := world.get_type_id[Velocity]()
+	mut movement_query := primer_ecs.new_query_system([pos_id, vel_id])
+	world.register_query_system(mut movement_query)
+
+	// After all transitions, entity should be in an archetype with Position+Velocity
+	results := movement_query.query(&world)
+	assert results.len == 1
+	assert results[0].entity == test_entity
 }
 
 fn test_query_performance_and_stats() {
@@ -178,6 +193,7 @@ fn test_query_performance_and_stats() {
 	}
 	mut movement_query := primer_ecs.new_query_system([pos_id, vel_id])
 	world.register_query_system(mut movement_query)
+
 	results1 := world.query([pos_id, vel_id])
 	assert results1.len == 102
 
@@ -186,6 +202,19 @@ fn test_query_performance_and_stats() {
 
 	count := movement_query.count(&world)
 	assert count == 102
+
+	for _ in 0 .. 5 {
+		world.create_with_components([
+			world.component(Position{ x: 1, y: 1 }),
+			world.component(Velocity{ dx: 2, dy: 2 }),
+		]) or { panic(err) }
+	}
+
+	results3 := movement_query.query(&world)
+	assert results3.len == 107
+
+	count2 := movement_query.count(&world)
+	assert count2 == 107
 }
 
 fn test_parallel_query_chunks() {
