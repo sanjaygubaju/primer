@@ -25,8 +25,9 @@ pub fn get_all_stages() []SystemStage {
 // -------------------- Core System Interface --------------------
 
 pub interface ISystem {
-	update(mut app App, dt f64) !
 	name() string
+mut:
+	update(mut app App, dt f64) !
 }
 
 // Optional interfaces
@@ -69,9 +70,9 @@ fn (mut ss SystemStats) record_execution(duration_ns i64, had_error bool) {
 // -------------------- System Wrapper --------------------
 
 struct SystemWrapper {
-	system ISystem
-	stage  SystemStage
+	stage SystemStage
 mut:
+	system          ISystem
 	enabled         bool = true
 	stats           SystemStats
 	execution_order int // Computed order based on dependencies
@@ -428,7 +429,7 @@ pub interface IInitializer {
 
 pub fn (mut sm SystemManager) init_all(mut app App) ! {
 	for mut wrapper in sm.systems {
-		if wrapper.system is IInitializer {
+		$if wrapper.system is IInitializer {
 			wrapper.system.init(mut app)!
 		}
 	}
@@ -440,7 +441,7 @@ pub interface IFinalizer {
 
 pub fn (mut sm SystemManager) finalize_all(mut app App) ! {
 	for mut wrapper in sm.systems {
-		if wrapper.system is IFinalizer {
+		$if wrapper.system is IFinalizer {
 			wrapper.system.finalize(mut app)!
 		}
 	}

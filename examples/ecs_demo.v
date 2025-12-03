@@ -433,11 +433,9 @@ fn (_ &PaddleControlSystem) name() string {
 	return 'PaddleControlSystem'
 }
 
-fn (ps &PaddleControlSystem) update(mut app App, _ f64) ! {
+fn (mut ps PaddleControlSystem) update(mut app App, _ f64) ! {
 	input := app.resource_manager.get[InputManager]() or { return }
-	mut query_sys := ps.QuerySystem
-
-	for result in query_sys.query(app.world) {
+	for result in ps.QuerySystem.query(app.world) {
 		paddle := result.get[Paddle](app.world) or { continue }
 		mut vel := result.get[Velocity](app.world) or { continue }
 		vel.x = 0

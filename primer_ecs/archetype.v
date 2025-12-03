@@ -27,6 +27,7 @@ pub mut:
 	components      map[ComponentTypeID]ComponentStorage // Component data per type
 	entity_to_row   map[EntityID]int                     // Maps entity to row index
 	edges           ArchetypeEdge                        // Cached archetype transitions
+	version         u64
 }
 
 // new_archetype creates a new archetype with given component types and sizes
@@ -50,6 +51,7 @@ pub fn new_archetype(component_types []ComponentTypeID, component_sizes map[Comp
 		components:      comp_map
 		entity_to_row:   map[EntityID]int{}
 		edges:           ArchetypeEdge{}
+		version:         0
 	}
 }
 
@@ -125,6 +127,7 @@ pub fn (mut arch Archetype) add(entity_id EntityID, component_data map[Component
 		}
 		arch.components[comp_type] = storage
 	}
+	arch.version += 1
 	return true
 }
 
@@ -155,6 +158,7 @@ pub fn (mut arch Archetype) remove(entity_id EntityID) bool {
 		storage.data.pop()
 		arch.components[comp_type] = storage
 	}
+	arch.version += 1
 	return true
 }
 
@@ -183,6 +187,7 @@ pub fn (mut arch Archetype) extract(entity_id EntityID) ?map[ComponentTypeID]voi
 		storage.data.pop()
 		arch.components[comp_type] = storage
 	}
+	arch.version += 1
 	return component_data
 }
 
@@ -198,6 +203,7 @@ pub fn (mut arch Archetype) clear() {
 		storage.data.clear()
 		arch.components[comp_type] = storage
 	}
+	arch.version += 1
 	arch.entities.clear()
 	arch.entity_to_row.clear()
 }
